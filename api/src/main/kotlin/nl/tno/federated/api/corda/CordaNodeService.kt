@@ -77,9 +77,9 @@ class CordaNodeService(private val rpc: NodeRPCConnection) {
      */
     fun extractSender(eventuuid: String): Party {
         val criteria = QueryCriteria.LinearStateQueryCriteria(uuid = listOf(UUID.fromString(eventuuid)))
-        val eventStateParties = rpc.client().vaultQueryBy<DataPullState>(criteria).states.single().state.data.participants
+        val eventStateParties = rpc.client().vaultQueryBy<EventState>(criteria).states.single().state.data.participants
 
-        val me = eventStateParties.first()
+        val me = rpc.client().nodeInfo().legalIdentities.first()
         val eventStateCounterParty = (eventStateParties - me).single()
 
         return rpc.client().partyFromKey(eventStateCounterParty.owningKey)!!

@@ -111,7 +111,8 @@ class EventController(
     @PostMapping(value = ["/autodistributed"])
     fun newEventDestinationImplied(@RequestBody event: String): ResponseEntity<String> {
         log.info("Extract destinations")
-        val destinations = cordaEventDistributionService.extractDestinationsFromEvent(event) ?: return ResponseEntity("Could not find party", HttpStatus.BAD_REQUEST)
+        val destinations = cordaEventDistributionService.extractDestinationsFromEvent(event)
+        if (destinations.isEmpty()) return ResponseEntity("Could not find party", HttpStatus.BAD_REQUEST)
 
         log.info("Start NewEventFlow for each destination and return UUIDs")
         val createdEventId = cordaNodeService.startNewEventFlow(event, destinations.map { it.cordaX500Name }.toSet())
@@ -192,10 +193,10 @@ class EventController(
     }
 
     @ApiOperation(value = "Return result of a custom SPARQL query")
-    @GetMapping(value = ["/gdbsparql/"])
-    fun gdbGeneralSparqlQuery(query: String): ResponseEntity<String> {
+    @PostMapping(value = ["/gdbsparql/"], consumes = ["text/plain"], produces = ["text/plain"])
+    fun gdbGeneralSparqlQuery(@RequestBody query: String): ResponseEntity<String> {
         val gdbQuery = cordaNodeService.startNewGeneralSPARQLqueryFlow(query)
-        return ResponseEntity("Query result: $gdbQuery", HttpStatus.ACCEPTED)
+        return ResponseEntity(gdbQuery, HttpStatus.ACCEPTED)
     }
 
     private fun eventStatesToEventMap(eventStates: List<EventState>): Map<UUID, List<Event>> {
